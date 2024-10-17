@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TodoApi.DTOs;
 using TodoApi.Models;
 
 namespace TodoApi.Controllers
@@ -17,33 +18,35 @@ namespace TodoApi.Controllers
 
     // GET: api/todolists
     [HttpGet]
-    public async Task<ActionResult<IList<TodoList>>> GetTodoLists()
+    public async Task<ActionResult<IList<TodoListListDTO>>> GetTodoLists()
     {
-      if (_context.TodoList == null)
+      if (_context.TodoLists == null)
       {
         return NotFound();
       }
 
-      return Ok(await _context.TodoList.ToListAsync());
+      var todoLists = await _context.TodoLists.ToListAsync();
+
+      return Ok(todoLists.Select(t=> new TodoListListDTO(t)).ToList());
     }
 
     // GET: api/todolists/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<TodoList>> GetTodoList(long id)
+    public async Task<ActionResult<TodoListDTO>> GetTodoList(long id)
     {
-      if (_context.TodoList == null)
+      if (_context.TodoLists == null)
       {
         return NotFound();
       }
 
-      var todoList = await _context.TodoList.FindAsync(id);
+      var todoList = _context.TodoLists.Include(t=> t.Items).Where(t=>t.Id==id).FirstOrDefault();
 
       if (todoList == null)
       {
         return NotFound();
       }
 
-      return Ok(todoList);
+      return Ok(new TodoListDTO(todoList));
     }
 
     // PUT: api/todolists/5
@@ -80,33 +83,35 @@ namespace TodoApi.Controllers
     // POST: api/todolists
     // To protect from over-posting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
-    public async Task<ActionResult<TodoList>> PostTodoList(TodoList todoList)
+    public async Task<ActionResult<TodoList>> PostTodoList(CreateTodoListDTO todoListDTO)
     {
-      if (_context.TodoList == null)
+      if (_context.TodoLists == null)
       {
         return Problem("Entity set 'TodoContext.TodoList'  is null.");
       }
-      _context.TodoList.Add(todoList);
+
+      TodoList todoList = todoListDTO.ToEntity();
+      _context.TodoLists.Add(todoList);
       await _context.SaveChangesAsync();
 
-      return CreatedAtAction("GetTodoList", new { id = todoList.Id }, todoList);
+      return CreatedAtAction("GetTodoList", new { id = todoListDTO.Id }, todoListDTO);
     }
 
     // DELETE: api/todolists/5
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteTodoList(long id)
     {
-      if (_context.TodoList == null)
+      if (_context.TodoLists == null)
       {
         return NotFound();
       }
-      var todoList = await _context.TodoList.FindAsync(id);
+      var todoList = await _context.TodoLists.FindAsync(id);
       if (todoList == null)
       {
         return NotFound();
       }
 
-      _context.TodoList.Remove(todoList);
+      _context.TodoLists.Remove(todoList);
       await _context.SaveChangesAsync();
 
       return NoContent();
@@ -114,7 +119,7 @@ namespace TodoApi.Controllers
 
     private bool TodoListExists(long id)
     {
-      return (_context.TodoList?.Any(e => e.Id == id)).GetValueOrDefault();
+      return (_context.TodoLists?.Any(e => e.Id == id)).GetValueOrDefault();
     }
   }
 }

@@ -2,8 +2,9 @@ using TodoApi.Controllers;
 using TodoApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TodoApi.DTOs;
 
-namespace TodoApi.Tests;
+namespace TodoApi.Tests.Controllers;
 
 #nullable disable
 public class TodoListsControllerTests
@@ -17,8 +18,8 @@ public class TodoListsControllerTests
 
   private void PopulateDatabaseContext(TodoContext context)
   {
-    context.TodoList.Add(new Models.TodoList { Id = 1, Name = "Task 1" });
-    context.TodoList.Add(new Models.TodoList { Id = 2, Name = "Task 2" });
+    context.TodoLists.Add(new Models.TodoList { Id = 1, Name = "Task 1" });
+    context.TodoLists.Add(new Models.TodoList { Id = 2, Name = "Task 2" });
     context.SaveChanges();
   }
 
@@ -36,7 +37,7 @@ public class TodoListsControllerTests
       Assert.IsType<OkObjectResult>(result.Result);
       Assert.Equal(
         2,
-        ((result.Result as OkObjectResult).Value as IList<TodoList>).Count
+        ((result.Result as OkObjectResult).Value as IList<TodoListListDTO>).Count
       );
     }
   }
@@ -55,7 +56,7 @@ public class TodoListsControllerTests
       Assert.IsType<OkObjectResult>(result.Result);
       Assert.Equal(
         1,
-        ((result.Result as OkObjectResult).Value as TodoList).Id
+        ((result.Result as OkObjectResult).Value as TodoListDTO).Id
       );
     }
   }
@@ -69,7 +70,7 @@ public class TodoListsControllerTests
 
       var controller = new TodoListsController(context);
 
-      var todoList = await context.TodoList.Where(x => x.Id == 2).FirstAsync();
+      var todoList = await context.TodoLists.Where(x => x.Id == 2).FirstAsync();
       var result = await controller.PutTodoList(1, todoList);
 
       Assert.IsType<BadRequestResult>(result);
@@ -100,7 +101,7 @@ public class TodoListsControllerTests
 
       var controller = new TodoListsController(context);
 
-      var todoList = await context.TodoList.Where(x => x.Id == 2).FirstAsync();
+      var todoList = await context.TodoLists.Where(x => x.Id == 2).FirstAsync();
       var result = await controller.PutTodoList(todoList.Id, todoList);
 
       Assert.IsType<NoContentResult>(result);
@@ -116,13 +117,13 @@ public class TodoListsControllerTests
 
       var controller = new TodoListsController(context);
 
-      var todoList = new TodoList { Name = "Task 3" };
+      var todoList = new CreateTodoListDTO() { Name = "Task 3" };
       var result = await controller.PostTodoList(todoList);
 
       Assert.IsType<CreatedAtActionResult>(result.Result);
       Assert.Equal(
         3,
-        context.TodoList.Count()
+        context.TodoLists.Count()
       );
     }
   }
@@ -141,7 +142,7 @@ public class TodoListsControllerTests
       Assert.IsType<NoContentResult>(result);
       Assert.Equal(
         1,
-        context.TodoList.Count()
+        context.TodoLists.Count()
       );
     }
   }

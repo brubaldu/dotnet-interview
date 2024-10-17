@@ -8,5 +8,6 @@ public class TodoContext : DbContext
   {
   }
 
-  public DbSet<TodoList> TodoList { get; set; } = default!;
+  public DbSet<TodoList> TodoLists { get; set; } = default!;
+  public DbSet<TodoItem> TodoItems { get; set; }
 }
