@@ -1,31 +1,31 @@
+using System.Net;
+using Domain;
+using IServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApi.DTOs;
-using TodoApi.Models;
+using TodoApi.Middleware;
 
 namespace TodoApi.Controllers
 {
   [Route("api/todolists")]
   [ApiController]
+  [ServiceFilter(typeof(ExceptionFilter))]
   public class TodoListsController : ControllerBase
   {
-    private readonly TodoContext _context;
+    private readonly ITodoListService _todoListService;
 
-    public TodoListsController(TodoContext context)
+    public TodoListsController(ITodoListService todoListService)
     {
-      _context = context;
+      _todoListService = todoListService;
     }
 
     // GET: api/todolists
     [HttpGet]
     public async Task<ActionResult<IList<TodoListListDTO>>> GetTodoLists()
     {
-      if (_context.TodoLists == null)
-      {
-        return NotFound();
-      }
 
-      var todoLists = await _context.TodoLists.ToListAsync();
+      var todoLists = await _todoListService.GetAllAsync();
 
       return Ok(todoLists.Select(t=> new TodoListListDTO(t)).ToList());
     }
@@ -34,18 +34,12 @@ namespace TodoApi.Controllers
     [HttpGet("{id}")]
     public async Task<ActionResult<TodoListDTO>> GetTodoList(long id)
     {
-      if (_context.TodoLists == null)
+      if (!await _todoListService.ExistsAsync(id))
       {
         return NotFound();
       }
-
-      var todoList = _context.TodoLists.Include(t=> t.Items).Where(t=>t.Id==id).FirstOrDefault();
-
-      if (todoList == null)
-      {
-        return NotFound();
-      }
-
+      var todoList = await _todoListService.GetAsync(id);
+      
       return Ok(new TodoListDTO(todoList));
     }
 
@@ -58,24 +52,13 @@ namespace TodoApi.Controllers
       {
         return BadRequest();
       }
-
-      _context.Entry(todoList).State = EntityState.Modified;
-
-      try
+      
+      if (!await _todoListService.ExistsAsync(id))
       {
-        await _context.SaveChangesAsync();
+        return NotFound();
       }
-      catch (DbUpdateConcurrencyException)
-      {
-        if (!TodoListExists(id))
-        {
-          return NotFound();
-        }
-        else
-        {
-          throw;
-        }
-      }
+
+      await _todoListService.UpdateAsync(id, todoList);
 
       return NoContent();
     }
@@ -83,43 +66,31 @@ namespace TodoApi.Controllers
     // POST: api/todolists
     // To protect from over-posting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
-    public async Task<ActionResult<TodoList>> PostTodoList(CreateTodoListDTO todoListDTO)
+    public async Task<ActionResult<TodoList>> PostTodoList(CreateTodoListDTO todoListDto)
     {
-      if (_context.TodoLists == null)
+      if (await _todoListService.ExistsAsync(todoListDto.Id))
       {
-        return Problem("Entity set 'TodoContext.TodoList'  is null.");
+        return Problem($"TodoList with Id {todoListDto.Id} already exist", statusCode:(int)HttpStatusCode.Conflict);
       }
 
-      TodoList todoList = todoListDTO.ToEntity();
-      _context.TodoLists.Add(todoList);
-      await _context.SaveChangesAsync();
+      TodoList todoList = todoListDto.ToEntity();
+      await _todoListService.CreateAsync(todoList);
 
-      return CreatedAtAction("GetTodoList", new { id = todoListDTO.Id }, todoListDTO);
+      return CreatedAtAction("GetTodoList", new { id = todoListDto.Id }, todoListDto);
     }
 
     // DELETE: api/todolists/5
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteTodoList(long id)
     {
-      if (_context.TodoLists == null)
+      if (!await _todoListService.ExistsAsync(id))
       {
         return NotFound();
       }
-      var todoList = await _context.TodoLists.FindAsync(id);
-      if (todoList == null)
-      {
-        return NotFound();
-      }
-
-      _context.TodoLists.Remove(todoList);
-      await _context.SaveChangesAsync();
+      
+      await _todoListService.DeleteAsync(id);
 
       return NoContent();
-    }
-
-    private bool TodoListExists(long id)
-    {
-      return (_context.TodoLists?.Any(e => e.Id == id)).GetValueOrDefault();
     }
   }
 }

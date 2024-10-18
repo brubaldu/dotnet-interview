@@ -1,5 +1,10 @@
+using Domain;
+using IRepository;
+using IServices;
 using Microsoft.EntityFrameworkCore;
-using TodoApi.Models;
+using Repository;
+using Services;
+using TodoApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services
@@ -21,6 +26,12 @@ builder.Services.AddSwaggerGen(c =>
         new(){Title = "TodoList API", Version = "v1"});
 });
 
+builder.Services.AddScoped<ExceptionFilter>();
+builder.Services.AddScoped<IRepository<TodoList>,TodoListRepository>();
+builder.Services.AddScoped<IRepository<TodoItem>,TodoItemRepository>();
+builder.Services.AddScoped<ITodoListService,TodoListService>();
+builder.Services.AddScoped<ITodoItemService,TodoItemService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -29,13 +40,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+
 var scope = app.Services.CreateScope();
 
-var context = scope.ServiceProvider.GetRequiredService<TodoContext>();
-
-context.TodoLists.Add(new TodoList { Id = 1, Name = "List 1", Items = new List<TodoItem>() { new TodoItem { Id = 1,  Text = "Text 1" }} });
-context.TodoLists.Add(new TodoList { Id = 2, Name = "List 2" });
-context.SaveChanges();
+using (TodoContext context = scope.ServiceProvider.GetRequiredService<TodoContext>())
+{
+    context.TodoLists.Add(new TodoList
+        { Id = 1, Name = "List 1", Items = new List<TodoItem>() { new TodoItem { Id = 1, Text = "Text 1" } } });
+    context.TodoLists.Add(new TodoList { Id = 2, Name = "List 2" });
+    context.SaveChanges();
+}
 
 app.UseAuthorization();
 app.MapControllers();

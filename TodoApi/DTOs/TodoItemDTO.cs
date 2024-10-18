@@ -1,4 +1,4 @@
-using TodoApi.Models;
+using Domain;
 
 namespace TodoApi.DTOs;
 

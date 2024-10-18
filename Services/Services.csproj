@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>11</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Domain\Domain.csproj" />
+      <ProjectReference Include="..\IRepository\IRepository.csproj" />
+      <ProjectReference Include="..\IServices\IServices.csproj" />
+    </ItemGroup>
+
+</Project>
