@@ -6,4 +6,5 @@ public class TodoItem
     public string Text { get; set; }
     public long TodoListId { get; set; }
     public TodoList TodoList { get; set; }
+    public DateTime Created { get; set; } = DateTime.Now;
 }

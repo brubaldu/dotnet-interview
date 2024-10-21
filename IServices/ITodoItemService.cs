@@ -13,4 +13,5 @@ public interface ITodoItemService
     public Task CreateAsync(TodoItem todoList);
     public Task UpdateAsync(long id, TodoItem todoList);
     public Task DeleteAsync(long id);
+    public Task<bool> CleanOldData(DateTime dateFrom, int rowsToDelete);
 }

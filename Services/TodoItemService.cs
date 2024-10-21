@@ -54,4 +54,9 @@ public class TodoItemService:ITodoItemService
     {
         await _todoItemRepository.InsertAsync(TodoItem);
     }
+
+    public async Task<bool> CleanOldData(DateTime dateFrom, int rowsToDelete)
+    {
+        return await _todoItemRepository.CleanOldData(dateFrom, rowsToDelete);
+    }
 }

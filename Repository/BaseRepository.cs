@@ -63,4 +63,9 @@ public class BaseRepository<T>: IRepository<T> where T :class
         _todoContext.Entry(elemToUpdate).CurrentValues.SetValues(elem);
         await _todoContext.SaveChangesAsync();
     }
+
+    public virtual async Task<bool> CleanOldData(DateTime dateFrom, int rowsToDelete)
+    {
+        throw new NotImplementedException();
+    }
 }

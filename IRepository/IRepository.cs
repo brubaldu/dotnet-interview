@@ -12,4 +12,5 @@ public interface IRepository<T> where T : class
     public Task InsertAsync(T elem);
     public Task DeleteAsync(long id);
     public Task UpdateAsync(long id, T elem);
+    public Task<bool> CleanOldData(DateTime dateFrom, int rowsToDelete);
 }
