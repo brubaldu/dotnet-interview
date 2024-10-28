@@ -35,8 +35,8 @@ public class TodoItemControllerTests
   private TodoItemsController CreateController(TodoContext context)
   {
     var repository = new TodoItemRepository(context);
-    var todoItemRepository = new TodoItemService(repository);
-    return new TodoItemsController(todoItemRepository);
+    var todoItemService = new TodoItemService(repository);
+    return new TodoItemsController(todoItemService);
   }
 
   [Fact]

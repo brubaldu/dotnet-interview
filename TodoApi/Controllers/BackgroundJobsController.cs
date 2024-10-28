@@ -23,23 +23,26 @@ public class BackgroundJobsController : ControllerBase
     
     // GET: api/backgroundjobs
     [HttpGet("getolditemsdeleted/{dateFrom}")]
-    public async Task GetOldItemsDeleted(DateTime dateFrom)
+    public async Task<ActionResult> GetOldItemsDeleted(DateTime dateFrom)
     {
         var today = DateTime.Today.ToString("yyyy-MM-dd");
         var scheduledTime = _configuration["TodoAppConfig:ScheduledTime"];
-        var dateTime = $"{today}T{scheduledTime}";
-        _jobClient.Schedule(() => EnquedCall(dateFrom),DateTimeOffset.Parse(dateTime));
+        var scheduledDateAndTime = $"{today}T{scheduledTime}";
+        
+        _jobClient.Schedule(() => EnqueOldItemsDeletion(dateFrom),DateTimeOffset.Parse(scheduledDateAndTime));
+
+        return NoContent();
     }
 
     [NonAction]
-    public async Task EnquedCall(DateTime dateFrom)
+    public async Task EnqueOldItemsDeletion(DateTime dateFrom)
     {
         int rowsToDelete = Int32.Parse(_configuration["TodoAppConfig:RowsToDeletePerJob"]);
         var callAgain = await _todoItemService.CleanOldData(dateFrom, rowsToDelete);
         var total = (await _todoItemService.GetAllAsync()).Count(t => t.Created <= dateFrom);
         Console.WriteLine($"Remaining TodoItems: {total}");
         if (callAgain)
-            _jobClient.Enqueue(() => EnquedCall(dateFrom)
+            _jobClient.Enqueue(() => EnqueOldItemsDeletion(dateFrom)
             );
     }
 
